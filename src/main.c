@@ -36,7 +36,7 @@ void handle_timer(AppContextRef ctx, AppTimerHandle handle, uint32_t cookie) {
 			if(debug_fast == 1) {
 				timer_handle_update = app_timer_send_event(ctx, 2000 /* milliseconds */, COOKIE_UPDATE);
 			} else {
-				timer_handle_update = app_timer_send_event(ctx, update_time * 30000 /* milliseconds */, COOKIE_UPDATE);
+				timer_handle_update = app_timer_send_event(ctx, update_time * 60000 /* milliseconds */, COOKIE_UPDATE);
 			}
 		}
 	}
