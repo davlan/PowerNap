@@ -70,9 +70,6 @@ void handle_init(AppContextRef ctx) {
 	
 	}
 	
-	timer_handle = app_timer_send_event(ctx, time_remaining * 60000 /* milliseconds */, COOKIE_END);
-	timer_handle_update = app_timer_send_event(ctx, update_time * 60000 /* milliseconds */, COOKIE_UPDATE);
-	
   	text_layer_init(&textLayer, window.layer.frame);
 	mini_snprintf(str, 21, "%d %s", time_remaining, remaining);
 	text_layer_set_text(&textLayer, str);
