@@ -6,13 +6,20 @@
 #define MY_UUID { 0xD9, 0x5E, 0x3C, 0x87, 0x91, 0x86, 0x4B, 0xD7, 0xAE, 0xB3, 0xA7, 0x71, 0xD3, 0x5D, 0x2B, 0xED }
 PBL_APP_INFO(MY_UUID, "Power Nap", "davidgray Photography", 1, 0, RESOURCE_ID_IMAGE_MENU_ICON, APP_INFO_STANDARD_APP /* App version */);
 
+// Various Pebble related items
 Window window;
 AppTimerHandle timer_handle;
 AppTimerHandle timer_handle_update;
 TextLayer textLayer;
-int time_remaining = 15;
-bool stop;
-static char str[60];
+
+
+int time_remaining = 15; // How long the nap will actually last for (in minutes)
+int update_time = 1; // When to update the text on the screen. (in minutes)
+bool debug_fast = 0; // Set to 1 to really speed things up (for testing)
+
+static char str[60]; // The string to output to the screen
+static char remaining[17] = "minutes remaining";
+static char finished[50] = "Nap time is over. Go forth and conquer!"; // Declare your string early to avoid crashes!
 
 #define COOKIE_END 1
 #define COOKIE_UPDATE 2
@@ -21,24 +28,30 @@ void handle_timer(AppContextRef ctx, AppTimerHandle handle, uint32_t cookie) {
 	(void)ctx;
 	(void)handle;
 
+	if (cookie == COOKIE_UPDATE) {
+		--time_remaining;
+		if(time_remaining > 0) {
+			mini_snprintf(str, 21, "%d %s", time_remaining, remaining);
+			text_layer_set_text(&textLayer, str);
+			if(debug_fast == 1) {
+				timer_handle_update = app_timer_send_event(ctx, 2000 /* milliseconds */, COOKIE_UPDATE);
+			} else {
+				timer_handle_update = app_timer_send_event(ctx, update_time * 30000 /* milliseconds */, COOKIE_UPDATE);
+			}
+		}
+	}
+	
 	if (cookie == COOKIE_END) {
 		const VibePattern custom_pattern = {
 		  .durations = (uint32_t []) {500, 500, 500, 500, 500, 500, 500, 500, 5000, 0},
 		  .num_segments = 10
 	    };
-	  
+	  	
+		text_layer_set_text(&textLayer, finished);
 		vibes_enqueue_custom_pattern(custom_pattern);
-		text_layer_set_text(&textLayer, "Nap time is over. Go forth and conquer!");
+		
 	} 
-	
-	if (cookie == COOKIE_UPDATE) {
-		--time_remaining;
-		if(time_remaining > 0) {
-			mini_snprintf(str, 21, "%d minutes remaining", time_remaining);
-			text_layer_set_text(&textLayer, str);
-			timer_handle_update = app_timer_send_event(ctx, 60000 /* milliseconds */, COOKIE_UPDATE);
-		}
-	}
+
 }
 
 void handle_init(AppContextRef ctx) {
@@ -46,11 +59,21 @@ void handle_init(AppContextRef ctx) {
 
   	window_init(&window, "Power Nap App");
   	window_stack_push(&window, true /* Animated */);
-	timer_handle = app_timer_send_event(ctx, 900000 /* milliseconds */, COOKIE_END);
-	timer_handle_update = app_timer_send_event(ctx, 60000 /* milliseconds */, COOKIE_UPDATE);
+	
+	if(debug_fast == 1) {
+		timer_handle = app_timer_send_event(ctx, 30000 /* milliseconds */, COOKIE_END);
+		timer_handle_update = app_timer_send_event(ctx, 2000 /* milliseconds */, COOKIE_UPDATE);
+	} else {
+		timer_handle = app_timer_send_event(ctx, time_remaining * 60000 /* milliseconds */, COOKIE_END);
+		timer_handle_update = app_timer_send_event(ctx, update_time * 60000 /* milliseconds */, COOKIE_UPDATE);
+	
+	}
+	
+	timer_handle = app_timer_send_event(ctx, time_remaining * 60000 /* milliseconds */, COOKIE_END);
+	timer_handle_update = app_timer_send_event(ctx, update_time * 60000 /* milliseconds */, COOKIE_UPDATE);
 	
   	text_layer_init(&textLayer, window.layer.frame);
-	mini_snprintf(str, 21, "%d minutes remaining", time_remaining);
+	mini_snprintf(str, 21, "%d %s", time_remaining, remaining);
 	text_layer_set_text(&textLayer, str);
 
   	text_layer_set_font(&textLayer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
