@@ -18,7 +18,7 @@ int update_time = 1; // When to update the text on the screen. (in minutes)
 bool debug_fast = 0; // Set to 1 to really speed things up (for testing)
 
 static char str[60]; // The string to output to the screen
-static char remaining[17] = "minutes remaining";
+static char remaining[20] = "minutes remaining";
 static char finished[50] = "Nap time is over. Go forth and conquer!"; // Declare your string early to avoid crashes!
 
 #define COOKIE_END 1
@@ -43,11 +43,12 @@ void handle_timer(AppContextRef ctx, AppTimerHandle handle, uint32_t cookie) {
 	
 	if (cookie == COOKIE_END) {
 		const VibePattern custom_pattern = {
-		  .durations = (uint32_t []) {500, 500, 500, 500, 500, 500, 500, 500, 5000, 0},
-		  .num_segments = 10
+		  .durations = (uint32_t []) {500, 500, 500, 500, 500, 500, 500, 500, 5000},
+		  .num_segments = 9
 	    };
 	  	
-		text_layer_set_text(&textLayer, finished);
+		mini_snprintf(str, 50, "%s", finished);
+		text_layer_set_text(&textLayer, str);
 		vibes_enqueue_custom_pattern(custom_pattern);
 		
 	} 
